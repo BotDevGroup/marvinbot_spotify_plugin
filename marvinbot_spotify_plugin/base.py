@@ -22,19 +22,22 @@ class SpotifyPlugin(Plugin):
         self.client_id = ""
         self.client_secret = ""
         self.spotify = spotipy.Spotify()
+        self.url_pattern = None
 
     def get_default_config(self):
         return {
             'short_name': self.name,
             'enabled': True,
             'client_id': "",
-            'client_secret': ""
+            'client_secret': "",
+            'url_pattern': r"https://open\.spotify\.com/(?P<type>track|album|artist)/(?P<id>[a-zA-Z0-9]+)"
         }
 
     def configure(self, config):
         log.info("Initializing Spotify Plugin")
         self.client_id = config.get("client_id")
         self.client_secret = config.get("client_secret")
+        self.url_pattern = re.compile(config.get("url_pattern"), flags=re.IGNORECASE)
 
     def setup_handlers(self, adapter):
         self.add_handler(CommandHandler('spotify', self.on_spotify_command, command_description='Allows the user to search for songs on Spotify.')
@@ -105,9 +108,10 @@ class SpotifyPlugin(Plugin):
         urls = map(lambda url: message.text[url.offset:url.offset + url.length],
                    filter(lambda entity: entity.type == MessageEntity.URL, message.entities))
 
-        pattern = "https://open\.spotify\.com/(?P<type>track|album|artist)/(?P<id>[a-zA-Z0-9]+)"
         for url in urls:
-            m = re.match(pattern, url)
+            m = self.url_pattern.match(url)
+            if not m:
+                continue
             if m.group("type") == "track":
                 track_id = m.group("id")
                 preview_url, filename = self.get_track_preview(track_id)
