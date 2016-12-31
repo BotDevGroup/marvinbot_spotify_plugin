@@ -38,9 +38,9 @@ class SpotifyPlugin(Plugin):
 
     def setup_handlers(self, adapter):
         self.add_handler(CommandHandler('spotify', self.on_spotify_command, command_description='Allows the user to search for songs on Spotify.')
-                         .add_argument('--artists', help='Search for artists', action='store_true')
-                         .add_argument('--albums', help='Search for albums', action='store_true')
-                         .add_argument('--playlists', help='Search for playlists', action='store_true')
+                         #  .add_argument('--artists', help='Search for artists', action='store_true')
+                         #  .add_argument('--albums', help='Search for albums', action='store_true')
+                         #  .add_argument('--playlists', help='Search for playlists', action='store_true')
                          .add_argument('--skip', help='Results to skip', default='0')
                          .add_argument('--count', help='Number of results', default='5')
                          .add_argument('terms', nargs='*', help='Search terms'))
