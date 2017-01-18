@@ -124,6 +124,8 @@ class SpotifyPlugin(Plugin):
         query = update.callback_query
         data = query.data.split(":")
         track_id = data[2]
+        query.answer('Fetching...')
+        query.message.edit_reply_markup(reply_markup=None)
         preview_url, filename = self.get_track_preview(track_id)
         self.fetch_and_send(query.message.chat_id, preview_url, filename)
 
