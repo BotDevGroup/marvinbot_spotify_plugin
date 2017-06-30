@@ -20,8 +20,6 @@ class SpotifyPlugin(Plugin):
 
     def __init__(self):
         super(SpotifyPlugin, self).__init__('spotify')
-        self.client_id = ""
-        self.client_secret = ""
         self.spotify = None
         self.url_pattern = None
 
@@ -36,10 +34,12 @@ class SpotifyPlugin(Plugin):
 
     def configure(self, config):
         log.info("Initializing Spotify Plugin")
-        self.client_id = config.get("client_id")
-        self.client_secret = config.get("client_secret")
+        client_id = config.get("client_id")
+        del config["client_id"]
+        client_secret = config.get("client_secret")
+        del config["client_secret"]
         self.url_pattern = re.compile(config.get("url_pattern"), flags=re.IGNORECASE)
-        client_credentials_manager = SpotifyClientCredentials(client_id=self.client_id, client_secret=self.client_secret)
+        client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
         self.spotify = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
     def setup_handlers(self, adapter):
