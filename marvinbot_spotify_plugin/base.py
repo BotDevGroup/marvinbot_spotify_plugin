@@ -9,6 +9,7 @@ from telegram import ChatAction
 import re
 import logging
 import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ class SpotifyPlugin(Plugin):
         super(SpotifyPlugin, self).__init__('spotify')
         self.client_id = ""
         self.client_secret = ""
-        self.spotify = spotipy.Spotify()
+        self.spotify = None
         self.url_pattern = None
 
     def get_default_config(self):
@@ -38,6 +39,8 @@ class SpotifyPlugin(Plugin):
         self.client_id = config.get("client_id")
         self.client_secret = config.get("client_secret")
         self.url_pattern = re.compile(config.get("url_pattern"), flags=re.IGNORECASE)
+        client_credentials_manager = SpotifyClientCredentials(client_id=self.client_id, client_secret=self.client_secret)
+        self.spotify = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
     def setup_handlers(self, adapter):
         self.add_handler(CommandHandler('spotify', self.on_spotify_command, command_description='Allows the user to search for songs on Spotify.')
