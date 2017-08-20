@@ -48,7 +48,7 @@ class SpotifyPlugin(Plugin):
                          #  .add_argument('--albums', help='Search for albums', action='store_true')
                          #  .add_argument('--playlists', help='Search for playlists', action='store_true')
                          #.add_argument('--skip', help='Results to skip', default='0')
-                         .add_argument('--count', help='Number of results', default='5')
+                         .add_argument('--count', help='Number of results', default='1')
                          .add_argument('terms', nargs='*', help='Search terms'))
         self.add_handler(MessageHandler(CommonFilters.entity(MessageEntity.URL), self.on_url))
         self.add_handler(CallbackQueryHandler('spotify:fetch-preview', self.on_button), priority=1)
