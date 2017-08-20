@@ -60,9 +60,9 @@ class SpotifyPlugin(Plugin):
         artists = kwargs.get('artists')
         albums = kwargs.get('albums')
         playlists = kwargs.get('playlists')
-        n = int(kwargs.get('count'))
+        n = int(kwargs.get('count',1))
         n = n if n >= 1 else 1
-        s = int(kwargs.get('skip'))
+        s = int(kwargs.get('skip',0))
         s = s if s >= 0 else 0
 
         if artists:
