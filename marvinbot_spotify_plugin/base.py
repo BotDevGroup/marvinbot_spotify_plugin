@@ -55,7 +55,7 @@ class SpotifyPlugin(Plugin):
 
     def on_spotify_command(self, update, **kwargs):
         message = get_message(update)
-        query = " ".join(kwargs.get('terms'))
+        query = (" ".join(kwargs.get('terms'))).strip()
 
         artists = kwargs.get('artists')
         albums = kwargs.get('albums')
