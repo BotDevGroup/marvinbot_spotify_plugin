@@ -11,6 +11,8 @@ import logging
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
+from mp3_tagger import MP3File, VERSION_BOTH
+
 log = logging.getLogger(__name__)
 
 
@@ -84,7 +86,7 @@ class SpotifyPlugin(Plugin):
                         a["external_urls"]["spotify"]), item["artists"]))
                 track = "[{}]({})".format(trim_markdown(item["name"]), item["external_urls"]["spotify"])
                 album = "[{}]({})".format(trim_markdown(item["album"]["name"]), item["album"]["external_urls"]["spotify"])
-                response = "🎼 {track} by 🎙{artists} from 💽 {album}".format(track=track, album=album, artists=artists)
+                response = "🎼 {track}\n🎙 {artists}\n💽 {album}".format(track=track, album=album, artists=artists)
                 responses.append(response)
         else:
             self.adapter.bot.sendMessage(chat_id=message.chat_id, text="Not yet implemented")
@@ -95,9 +97,16 @@ class SpotifyPlugin(Plugin):
             return
 
         track_id = data["tracks"]["items"][s]["id"]
+
         callback_data = "{name}:{action}:{track_id}".format(name=self.name, action="fetch-preview", track_id=track_id)
-        preview_button = InlineKeyboardButton(text="Preview", callback_data=callback_data)
-        keyboard = [[preview_button]]
+
+        url="https://open.spotify.com/track/{}".format(track_id)
+        listen_on_spotify = InlineKeyboardButton(text="Listen on Spotify", url=url)
+        if data["tracks"]["items"][s]["preview_url"]:
+            preview_button = InlineKeyboardButton(text="Preview", callback_data=callback_data)
+            keyboard = [[preview_button, listen_on_spotify]]
+        else:
+            keyboard = [[listen_on_spotify]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         self.adapter.bot.sendMessage(chat_id=message.chat_id,
                                      text="\n\n".join(responses),
@@ -117,20 +126,38 @@ class SpotifyPlugin(Plugin):
                 continue
             if m.group("type") == "track":
                 track_id = m.group("id")
-                preview_url, filename = self.get_track_preview(track_id)
-                self.fetch_and_send(message.chat_id, preview_url, filename)
-            else:
-                self.adapter.bot.sendMessage(chat_id=message.chat_id,
-                                             text="❌ URL type not supported.")
+                preview_url, filename, track_name, artists = self.get_track_preview(track_id)
+                log.info("Fetching %s - %s", artists, track_name)
+                self.fetch_and_send(message.chat_id, preview_url, filename, track_name, artists)
+            if m.group("type") == "album":
+                album_id = m.group("id")
+                data = self.spotify.album(album_id)
+                artists = ", ".join(
+                    map(lambda artist: "[{}]({})".format(trim_markdown(artist["name"]),
+                        artist["external_urls"]["spotify"]), data["artists"]))
+                album = "[{}]({})".format(trim_markdown(data["name"]), data["external_urls"]["spotify"])
+                release_date = data.get("release_date")
+                responses = []
+                responses.append("💽 {album}\n🎙 {artists}\n📅 {release_date}\n".format(release_date=release_date, album=album, artists=artists))
+                for item in data["tracks"]["items"]:
+                    responses.append("🎼 [{name}]({url})".format(name=item["name"], url=item["external_urls"]["spotify"]))
+                self.adapter.bot.sendMessage(
+                    chat_id=message.chat_id,
+                    text='\n'.join(responses),
+                    disable_web_page_preview=True,
+                    parse_mode="Markdown")
 
     def on_button(self, update):
         query = update.callback_query
         data = query.data.split(":")
         track_id = data[2]
         query.answer('Fetching...')
-        query.message.edit_reply_markup(reply_markup=None)
-        preview_url, filename = self.get_track_preview(track_id)
-        self.fetch_and_send(query.message.chat_id, preview_url, filename)
+        url="https://open.spotify.com/track/{}".format(track_id)
+        listen_on_spotify = InlineKeyboardButton(text="Listen on Spotify", url=url)
+        keyboard = [[listen_on_spotify]]
+        query.message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(keyboard))
+        preview_url, filename, track_name, artists = self.get_track_preview(track_id)
+        self.fetch_and_send(query.message.chat_id, preview_url, filename, track_name, artists)
 
     def get_track_preview(self, track_id):
         track = self.spotify.track(track_id)
@@ -139,11 +166,16 @@ class SpotifyPlugin(Plugin):
         artists = ", ".join(
             map(lambda a: trim_markdown(a["name"]), track["artists"]))
         filename = "{} - {}.mp3".format(artists, track_name)
-        return preview_url, filename
+        return preview_url, filename, track_name, artists
 
-    def fetch_and_send(self, chat_id, url, target_filename):
+    def fetch_and_send(self, chat_id, url, target_filename, track_name, artists):
         def on_done(filename):
             self.adapter.bot.sendChatAction(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
+            mp3 = MP3File(filename)
+            mp3.song = track_name
+            mp3.artist = artists
+            mp3.set_version(VERSION_BOTH)
+            mp3.save()
             with open(filename, 'rb') as fp:
                 self.adapter.bot.sendAudio(chat_id=chat_id, audio=fp)
         download_file(url=url, on_done=on_done, target_filename=target_filename)
