@@ -3,7 +3,8 @@ from setuptools import find_packages
 
 REQUIREMENTS = [
     'marvinbot',
-    'spotipy'
+    'spotipy',
+    'mp3-tagger'
 ]
 
 setup(name='marvinbot-spotify-plugin',
