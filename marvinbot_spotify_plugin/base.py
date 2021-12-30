@@ -183,5 +183,6 @@ class SpotifyPlugin(Plugin):
             mp3.set_version(VERSION_BOTH)
             mp3.save()
             with open(filename, 'rb') as fp:
-                self.adapter.bot.sendAudio(chat_id=chat_id, audio=fp)
+                self.adapter.bot.sendAudio(chat_id=chat_id, audio=fp, timeout=60)
+
         download_file(url=url, on_done=on_done, target_filename=target_filename)
