@@ -129,6 +129,10 @@ class SpotifyPlugin(Plugin):
             if m.group("type") == "track":
                 track_id = m.group("id")
                 preview_url, filename, track_name, artists = self.get_track_preview(track_id)
+
+                if preview_url is None or len(preview_url) == 0:
+                    log.info("Not fetching %s - %s. Reason: preview_url is empty", artists, track_name)
+                    continue
                 log.info("Fetching %s - %s", artists, track_name)
                 self.fetch_and_send(message.chat_id, preview_url, filename, track_name, artists)
             if m.group("type") == "album":
