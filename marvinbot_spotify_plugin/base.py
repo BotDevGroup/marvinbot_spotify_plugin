@@ -45,11 +45,13 @@ class SpotifyPlugin(Plugin):
         self.spotify = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
     def setup_handlers(self, adapter):
-        self.add_handler(CommandHandler('spotify', self.on_spotify_command, command_description='Allows the user to search for songs on Spotify.')
+        self.add_handler(CommandHandler('spotify', self.on_spotify_command, command_description='Allows the user to '
+                                                                                                'search for songs on '
+                                                                                                'Spotify.')
                          #  .add_argument('--artists', help='Search for artists', action='store_true')
                          #  .add_argument('--albums', help='Search for albums', action='store_true')
                          #  .add_argument('--playlists', help='Search for playlists', action='store_true')
-                         #.add_argument('--skip', help='Results to skip', default='0')
+                         # .add_argument('--skip', help='Results to skip', default='0')
                          .add_argument('--count', help='Number of results', default='1')
                          .add_argument('terms', nargs='*', help='Search terms'))
         self.add_handler(MessageHandler(CommonFilters.entity(MessageEntity.URL), self.on_url))
@@ -64,9 +66,9 @@ class SpotifyPlugin(Plugin):
         artists = kwargs.get('artists')
         albums = kwargs.get('albums')
         playlists = kwargs.get('playlists')
-        n = int(kwargs.get('count',1))
+        n = int(kwargs.get('count', 1))
         n = n if n >= 1 else 1
-        s = int(kwargs.get('skip',0))
+        s = int(kwargs.get('skip', 0))
         s = s if s >= 0 else 0
 
         if artists:
@@ -85,9 +87,10 @@ class SpotifyPlugin(Plugin):
             for item in data["tracks"]["items"][s:s + n]:
                 artists = ", ".join(
                     map(lambda a: "[{}]({})".format(trim_markdown(a["name"]),
-                        a["external_urls"]["spotify"]), item["artists"]))
+                                                    a["external_urls"]["spotify"]), item["artists"]))
                 track = "[{}]({})".format(trim_markdown(item["name"]), item["external_urls"]["spotify"])
-                album = "[{}]({})".format(trim_markdown(item["album"]["name"]), item["album"]["external_urls"]["spotify"])
+                album = "[{}]({})".format(trim_markdown(item["album"]["name"]),
+                                          item["album"]["external_urls"]["spotify"])
                 response = "🎼 {track}\n🎙 {artists}\n💽 {album}".format(track=track, album=album, artists=artists)
                 responses.append(response)
         else:
@@ -102,7 +105,7 @@ class SpotifyPlugin(Plugin):
 
         callback_data = "{name}:{action}:{track_id}".format(name=self.name, action="fetch-preview", track_id=track_id)
 
-        url="https://open.spotify.com/track/{}".format(track_id)
+        url = "https://open.spotify.com/track/{}".format(track_id)
         listen_on_spotify = InlineKeyboardButton(text="Listen on Spotify", url=url)
         if data["tracks"]["items"][s]["preview_url"]:
             preview_button = InlineKeyboardButton(text="Preview", callback_data=callback_data)
@@ -140,13 +143,16 @@ class SpotifyPlugin(Plugin):
                 data = self.spotify.album(album_id)
                 artists = ", ".join(
                     map(lambda artist: "[{}]({})".format(trim_markdown(artist["name"]),
-                        artist["external_urls"]["spotify"]), data["artists"]))
+                                                         artist["external_urls"]["spotify"]), data["artists"]))
                 album = "[{}]({})".format(trim_markdown(data["name"]), data["external_urls"]["spotify"])
                 release_date = data.get("release_date")
                 responses = []
-                responses.append("💽 {album}\n🎙 {artists}\n📅 {release_date}\n".format(release_date=release_date, album=album, artists=artists))
+                responses.append(
+                    "💽 {album}\n🎙 {artists}\n📅 {release_date}\n".format(release_date=release_date, album=album,
+                                                                           artists=artists))
                 for item in data["tracks"]["items"]:
-                    responses.append("🎼 [{name}]({url})".format(name=item["name"], url=item["external_urls"]["spotify"]))
+                    responses.append(
+                        "🎼 [{name}]({url})".format(name=item["name"], url=item["external_urls"]["spotify"]))
                 self.adapter.bot.sendMessage(
                     chat_id=message.chat_id,
                     text='\n'.join(responses),
@@ -158,7 +164,7 @@ class SpotifyPlugin(Plugin):
         data = query.data.split(":")
         track_id = data[2]
         query.answer('Fetching...')
-        url="https://open.spotify.com/track/{}".format(track_id)
+        url = "https://open.spotify.com/track/{}".format(track_id)
         listen_on_spotify = InlineKeyboardButton(text="Listen on Spotify", url=url)
         keyboard = [[listen_on_spotify]]
         query.message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(keyboard))
